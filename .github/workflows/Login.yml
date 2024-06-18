@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   
   schedule:
-    - cron: '6 9 */7 * *'
+    - cron: '6 9 */7 * *' # 每 7 天一次，每次执行的时间是凌晨  09:06
 
 env:
   ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
