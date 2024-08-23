@@ -1,35 +1,47 @@
-name: Login
+name: Login and Update Version
 
 on:
   workflow_dispatch:
-  
   schedule:
-    - cron: '6 9 */7 * *' # 每 7 天一次，每次执行的时间是凌晨  09:06
+    - cron: '6 9 */7 * *' # 每 7 天一次，每次执行的时间是凌晨 09:06
 
 env:
   ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
 
-jobs:  
-  login:  
-    runs-on: ubuntu-latest  
-  
-    steps:  
-      - name: Checkout repository  
-        uses: actions/checkout@v3  
-  
-      - name: Set up Node.js  
-        uses: actions/setup-node@v3  
-        with:  
-          node-version: '20.x'  
-  
-      - name: Install dependencies  
-        run: npm install puppeteer  
-  
-      - name: Create accounts.json  
-        run: echo "$ACCOUNTS_JSON" > accounts.json  
-  
-      - name: Login to website  
-        run: |  
-          set -e  
+jobs:
+  login-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # 获取所有历史记录，以确保我们可以推送
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm install puppeteer
+
+      - name: Create accounts.json
+        run: echo "$ACCOUNTS_JSON" > accounts.json
+
+      - name: Update version.json
+        run: |
+          echo "{\"lastUpdated\": \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"}" > version.json
+
+      - name: Login to website
+        run: |
+          set -e
           xvfb-run --server-args="-screen 0 1280x1024x24" node login.js
 
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add version.json
+          git commit -m "Update version.json timestamp" || echo "No changes to commit"
+          git push
